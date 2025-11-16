@@ -1,0 +1,11 @@
+node_modules/
+dist/
+.npm-cache/
+client/.npm-cache/
+client/node_modules/
+.DS_Store
+*.log
+.env*
+client/.env*
+
+

@@ -1,0 +1,361 @@
+openapi: 3.1.0
+info:
+  title: Calorie Diary API
+  version: 1.0.0
+  description: >
+    REST API exposed by n8n for the Calorie Diary frontend application.
+servers:
+  - url: https://n8n.your-domain.example
+    description: Production
+  - url: http://localhost:5678
+    description: Local development
+paths:
+  /api/register:
+    post:
+      summary: Register a new user
+      tags: [Authentication]
+      description: |
+        Register a new user with complete profile information including fitness goals.
+        Returns 201 with a message when email confirmation is required before login.
+        Returns 200 with token for immediate auto-login (if email confirmation is not required).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterRequest'
+            examples:
+              complete:
+                summary: Complete registration
+                value:
+                  fullName: יוסי קריכלי
+                  email: yosefkri1241@gmail.com
+                  password: "123456"
+                  age: "37"
+                  height: "182"
+                  weight: "89"
+                  sex: זכר
+                  workoutDays: "5-7"
+                  goal: גירעון קלורי
+                  referralSource: "Crossfit Savoy"
+      responses:
+        '200':
+          description: Registration succeeded; token is returned for auto-login.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '201':
+          description: Registration succeeded; email confirmation required before login.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RegisterResponse'
+              examples:
+                emailConfirmation:
+                  summary: Email confirmation required
+                  value:
+                    token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+                    user:
+                      id: "1341113"
+                      name: יוסי קריכלי
+                      email: yosefkri1241@gmail.com
+                    message: תודה על ההרשמה, ישלח מייל אישור לשימוש במערכת
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '409':
+          description: Email already exists.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/login:
+    post:
+      summary: Authenticate with email and password
+      tags: [Authentication]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '401':
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /api/stats:
+    get:
+      summary: Get calorie statistics for a period
+      tags: [Statistics]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: period
+          in: query
+          required: true
+          description: Aggregation period for the stats response.
+          schema:
+            $ref: '#/components/schemas/Period'
+      responses:
+        '200':
+          description: Statistics for the selected period
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StatsResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '422':
+          description: Invalid period supplied.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/consumption:
+    post:
+      summary: Create a new meal entry
+      tags: [Consumption]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MealInput'
+      responses:
+        '201':
+          description: Meal saved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MealResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    LoginRequest:
+      type: object
+      required: [email, password]
+      properties:
+        email:
+          type: string
+          format: email
+          example: user@example.com
+        password:
+          type: string
+          format: password
+          example: StrongPassword123
+    RegisterRequest:
+      type: object
+      required: [fullName, email, password, age, height, weight, sex, workoutDays, goal, referralSource]
+      properties:
+        fullName:
+          type: string
+          example: יוסי קריכלי
+          description: Full name of the user
+        email:
+          type: string
+          format: email
+          example: newuser@example.com
+        password:
+          type: string
+          format: password
+          minLength: 6
+          example: StrongPassword123
+        age:
+          type: string
+          example: "37"
+          description: Age of the user
+        height:
+          type: string
+          example: "182"
+          description: Height in centimeters
+        weight:
+          type: string
+          example: "89"
+          description: Weight in kilograms
+        sex:
+          type: string
+          enum: [זכר, נקבה]
+          example: זכר
+          description: Gender of the user
+        workoutDays:
+          type: string
+          enum: ["1-2", "3-4", "5-7"]
+          example: "3-4"
+          description: Number of workout days per week
+        goal:
+          type: string
+          enum: [גירעון קלורי, שמירה על קלוריות, בניית מסת שריר]
+          example: גירעון קלורי
+          description: User's fitness goal
+        referralSource:
+          type: string
+          enum: ["Crossfit Savoy", "Facebook", "Instagram"]
+          example: "Crossfit Savoy"
+          description: How the user heard about us
+    AuthResponse:
+      type: object
+      required: [token]
+      properties:
+        token:
+          type: string
+          example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+        user:
+          $ref: '#/components/schemas/User'
+    RegisterResponse:
+      type: object
+      properties:
+        token:
+          type: string
+          example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+          description: JWT token (may be omitted for email confirmation flow)
+        user:
+          $ref: '#/components/schemas/User'
+        message:
+          type: string
+          example: תודה על ההרשמה, ישלח מייל אישור לשימוש במערכת
+          description: Registration message, typically indicates email confirmation is required
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+          example: 65f1a8b3c2d4e5f678901234
+        name:
+          type: string
+          example: יוסיק כהן
+        email:
+          type: string
+          format: email
+          example: user@example.com
+        photoUrl:
+          type: string
+          format: uri
+          example: https://cdn.example.com/avatars/yossik.png
+    Period:
+      type: string
+      enum: [day, week, month, year]
+      example: day
+    StatsResponse:
+      type: object
+      required: [period, totalCalories, meals]
+      properties:
+        period:
+          $ref: '#/components/schemas/Period'
+        totalCalories:
+          type: number
+          example: 1850
+        goalCalories:
+          type: number
+          nullable: true
+          example: 2000
+        meals:
+          type: array
+          items:
+            $ref: '#/components/schemas/MealEntry'
+        breakdown:
+          type: array
+          items:
+            type: object
+            required: [label, calories]
+            properties:
+              label:
+                type: string
+                example: בוקר
+              calories:
+                type: number
+                example: 450
+    MealEntry:
+      type: object
+      required: [id, name, calories, consumedAt]
+      properties:
+        id:
+          type: string
+          example: meal_123456
+        name:
+          type: string
+          example: סלט קינואה
+        calories:
+          type: number
+          example: 320
+        emoji:
+          type: string
+          example: 🥗
+        consumedAt:
+          type: string
+          format: date-time
+          example: 2025-11-13T07:30:00.000Z
+    MealInput:
+      type: object
+      required: [name, calories]
+      properties:
+        name:
+          type: string
+          example: שייק ירוק
+        calories:
+          type: number
+          example: 210
+        emoji:
+          type: string
+          example: 🥤
+        consumedAt:
+          type: string
+          format: date-time
+          nullable: true
+          example: 2025-11-13T08:45:00.000Z
+    MealResponse:
+      type: object
+      required: [meal, message]
+      properties:
+        meal:
+          $ref: '#/components/schemas/MealEntry'
+        message:
+          type: string
+          example: הארוחה נשמרה בהצלחה
+    ErrorResponse:
+      type: object
+      required: [message]
+      properties:
+        message:
+          type: string
+          example: פעולה נכשלה. נסו שוב.
+  responses:
+    BadRequest:
+      description: Validation error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    Unauthorized:
+      description: Authentication required or token invalid
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    TooManyRequests:
+      description: Too many requests
+      headers:
+        Retry-After:
+          description: Seconds until the client should retry.
+          schema:
+            type: integer
