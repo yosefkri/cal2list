@@ -12,7 +12,7 @@ interface UseCalorieStatsResult {
 }
 
 export const useCalorieStats = (period: Period): UseCalorieStatsResult => {
-  const { token } = useAuth()
+  const { token, user } = useAuth()
   const [data, setData] = useState<StatsResponse | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -33,7 +33,7 @@ export const useCalorieStats = (period: Period): UseCalorieStatsResult => {
       setLoading(true)
       setError(null)
       try {
-        const stats = await fetchStats(period)
+        const stats = await fetchStats(period, user?.email)
         if (!cancelled) {
           setData(stats)
         }
@@ -53,7 +53,7 @@ export const useCalorieStats = (period: Period): UseCalorieStatsResult => {
     return () => {
       cancelled = true
     }
-  }, [period, refreshIndex, token])
+  }, [period, refreshIndex, token, user?.email])
 
   return useMemo(
     () => ({
@@ -65,5 +65,3 @@ export const useCalorieStats = (period: Period): UseCalorieStatsResult => {
     [data, error, loading, refresh],
   )
 }
-
-

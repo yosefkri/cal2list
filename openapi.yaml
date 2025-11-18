@@ -107,6 +107,14 @@ paths:
           description: Aggregation period for the stats response.
           schema:
             $ref: '#/components/schemas/Period'
+        - name: email
+          in: query
+          required: false
+          description: Email address to filter statistics for a specific user.
+          schema:
+            type: string
+            format: email
+            example: user@example.com
       responses:
         '200':
           description: Statistics for the selected period
@@ -307,7 +315,7 @@ components:
           example: 2025-11-13T07:30:00.000Z
     MealInput:
       type: object
-      required: [name, calories]
+      required: [name]
       properties:
         name:
           type: string
@@ -315,6 +323,7 @@ components:
         calories:
           type: number
           example: 210
+          description: Calorie count (optional - can be calculated automatically by agent)
         emoji:
           type: string
           example: 🥤
@@ -323,6 +332,11 @@ components:
           format: date-time
           nullable: true
           example: 2025-11-13T08:45:00.000Z
+        email:
+          type: string
+          format: email
+          example: user@example.com
+          description: Email address to associate the meal with a specific user
     MealResponse:
       type: object
       required: [meal, message]

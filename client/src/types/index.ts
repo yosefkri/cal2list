@@ -17,7 +17,7 @@ export interface MealEntry {
 
 export interface MealInput {
   name: string
-  calories: number
+  calories?: number
   emoji?: string
   consumedAt?: string
 }

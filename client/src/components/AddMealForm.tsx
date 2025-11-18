@@ -2,10 +2,10 @@ import type { FormEvent } from 'react'
 import { useMemo, useState } from 'react'
 import AddCircleIcon from '@mui/icons-material/AddCircle'
 import EmojiNatureIcon from '@mui/icons-material/EmojiNature'
-import HealthAndSafetyIcon from '@mui/icons-material/HealthAndSafety'
 import RestaurantMenuIcon from '@mui/icons-material/RestaurantMenu'
 import { Box, Button, Card, CardContent, MenuItem, Stack, TextField, Typography } from '@mui/material'
 
+import { useAuth } from '../hooks/useAuth'
 import { createMealEntry } from '../services/consumption'
 import type { MealInput } from '../types'
 
@@ -16,6 +16,7 @@ interface AddMealFormProps {
 const emojiOptions = ['🥗', '🍱', '🍲', '🍛', '🥙', '🥞', '🧋', '🍎', '🍌', '🥑']
 
 const AddMealForm = ({ onSuccess }: AddMealFormProps) => {
+  const { user } = useAuth()
   const [formData, setFormData] = useState<MealInput>({
     name: '',
     calories: 0,
@@ -25,8 +26,8 @@ const AddMealForm = ({ onSuccess }: AddMealFormProps) => {
   const [error, setError] = useState<string | null>(null)
 
   const isFormValid = useMemo(
-    () => formData.name.trim().length > 1 && formData.calories > 0,
-    [formData.calories, formData.name],
+    () => formData.name.trim().length > 1,
+    [formData.name],
   )
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
@@ -40,7 +41,7 @@ const AddMealForm = ({ onSuccess }: AddMealFormProps) => {
       await createMealEntry({
         ...formData,
         consumedAt: new Date().toISOString(),
-      })
+      }, user?.email)
       setFormData({
         name: '',
         calories: 0,
@@ -86,39 +87,23 @@ const AddMealForm = ({ onSuccess }: AddMealFormProps) => {
             sx={{
               display: 'grid',
               gap: 2,
-              gridTemplateColumns: { xs: '1fr', md: '1.6fr 1fr 0.8fr' },
+              gridTemplateColumns: { xs: '1fr', md: '2fr 1fr' },
             }}
           >
             <Box>
               <TextField
-                label="שם הארוחה"
+                label="פרט את האוכל שאכלת כמה שיותר כולל משקל אם ידוע"
                 value={formData.name}
                 required
                 onChange={(event) =>
                   setFormData((prev) => ({ ...prev, name: event.target.value }))
                 }
-                placeholder="לדוגמה: סלט קינואה"
+                placeholder="לדוגמה: סלט קינואה 250 גרם, לחם מלא פרוסה אחת"
                 InputProps={{
                   startAdornment: <RestaurantMenuIcon color="primary" sx={{ mr: 1 }} />,
                 }}
-              />
-            </Box>
-            <Box>
-              <TextField
-                label="קלוריות"
-                type="number"
-                value={formData.calories || ''}
-                required
-                inputProps={{ min: 0, step: 10 }}
-                onChange={(event) =>
-                  setFormData((prev) => ({
-                    ...prev,
-                    calories: Number(event.target.value),
-                  }))
-                }
-                InputProps={{
-                  startAdornment: <HealthAndSafetyIcon color="secondary" sx={{ mr: 1 }} />,
-                }}
+                multiline
+                rows={2}
               />
             </Box>
             <Box>
@@ -163,4 +148,3 @@ const AddMealForm = ({ onSuccess }: AddMealFormProps) => {
 }
 
 export default AddMealForm
-
