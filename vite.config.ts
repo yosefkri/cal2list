@@ -8,7 +8,7 @@ export default defineConfig(({ mode }) => {
 
   return {
     plugins: [react()],
-    base: './',
+    base: mode === 'production' ? '/cal2list/' : '/',
     build: {
       outDir: 'dist',
       sourcemap: mode !== 'production',
@@ -24,5 +24,3 @@ export default defineConfig(({ mode }) => {
     },
   }
 })
-
-
