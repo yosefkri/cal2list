@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Redirecting...</title>
+    <script>
+      // GitHub Pages 404.html redirect for SPA routing
+      // Store the original path and redirect to index.html
+      const basePath = '/cal2list';
+      const path = window.location.pathname;
+      const search = window.location.search;
+      const hash = window.location.hash;
+      
+      // Extract relative path
+      let relativePath = path.startsWith(basePath) 
+        ? path.slice(basePath.length) 
+        : path;
+      
+      if (relativePath === '' || relativePath === '/') {
+        relativePath = '/';
+      }
+      
+      // Store the full path info for index.html to use
+      const fullPath = relativePath + search + hash;
+      sessionStorage.setItem('githubPages404Redirect', fullPath);
+      
+      // Redirect to index.html
+      window.location.replace(basePath + '/index.html');
+    </script>
+  </head>
+  <body>
+    <p>מעביר...</p>
+    <noscript>
+      <p>אנא הפעל JavaScript או <a href="/cal2list/">לחץ כאן</a></p>
+    </noscript>
+  </body>
+</html>
+
